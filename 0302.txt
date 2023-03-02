@@ -1,0 +1,26 @@
+git (https://git-scm.com/)
+
+https://github.com/skynettw/
+
+Visual Studio Code
+
+https://github.com/skynettw/ecwww111-2
+
+
+做一個電商網站，你需要哪些東西？
+DNS : Domain Name Server 網域名稱伺服器 
+nslookup指令，可以協助我們找出網域的IP
+
+
+1. 網址 (min-huang.com)
+2. 網路上的一個磁碟空間 (IP: 209.112.80.34)
+3. 內容 (靜態，動態) ==> 資料庫
+4. 程式碼 (a.把資料找出來的程式，b.把找出的資料排版好)
+4.a 後端程式語言 (PHP, Java, JavaScript, Perl, Python)
+    在伺服器上執行
+4.b 前端程式語言 (HTML, CSS, JavaScript)
+
+可以執行上述的網站環境，我們把它們叫做 ?AMP
+  WAMP: Windows <== 個人開發用
+  LAMP: Linux   <=== 上線的網站，大部份都是這種
+  MAMP: MacOS   <== 個人開發用
