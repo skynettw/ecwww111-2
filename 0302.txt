@@ -24,3 +24,12 @@ nslookup指令，可以協助我們找出網域的IP
   WAMP: Windows <== 個人開發用
   LAMP: Linux   <=== 上線的網站，大部份都是這種
   MAMP: MacOS   <== 個人開發用
+
+
+http://myname.pchomebiz.com.tw/
+https://tw.godaddy.com/zh
+https://www.000webhost.com/
+
+https://www.wix.com/
+https://www.webnode.com/zh/
+https://wordpress.com/zh-tw/
