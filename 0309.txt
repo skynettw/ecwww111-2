@@ -27,3 +27,6 @@ Install WordPress on your Windows / Mac
 2.要建立一個給 WordPress 使用的資料庫 (phpmyadmin)
   帳號：wpadmin, 建議密碼：nkust@0000
 3.為使用者建立該資料的存取權限
+4.執行 WordPress 的安裝程序 
+  localhost/ecwww111-2/wp
+  WordPress後台管理者帳號建議：admin
