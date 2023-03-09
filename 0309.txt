@@ -1,0 +1,22 @@
+前端：瀏覽器上執行 
+HTML/CSS/JavaScript
+
+後端：伺服器上執行
+PHP + MySQL + Disk(作業系統) + Web Server
+
+老師的程式碼位址：Repository
+https://github.com/skynettw/ecwww111-2
+
+
+WAMP => Windows + Apache + MySQL + PHP 
+  APPServ安裝到你的筆電中 
+  它的網址：localhost (本地端網址)
+      IP ： 127.0.0.1 
+
+Apache: localhost
+MySQL:  localhost/phpmyadmin
+PHP Directory: C:\APPServ\www      
+
+
+LAMP => Linux
+MAMP => MacOS
