@@ -1,0 +1,43 @@
+
+
+WAMP
+
+Windows Apache MySQL PHP
+
+
+youtube.com/richardho
+
+
+PHP 程式 ==> WAMP
+
+<?php
+
+  ... 就是 PHP 程式碼放置的地方 
+
+?>
+PHP語言的變數前面一定要加上 $
+
+html/css/javascript 程式 ==>瀏覽器就好了
+
+WordPress
+網址：localhost/ecwww111-2/wp
+後台：localhost/ecwww111-2/wp/wp-admin
+
+先選佈景主題 
+安裝外掛 => instant images
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,16 +1,7 @@
 
 # BEGIN WordPress
-# The directives (lines) between "BEGIN WordPress" and "END WordPress" are
-# dynamically generated, and should only be modified via WordPress filters.
-# Any changes to the directives between these markers will be overwritten.
-<IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-RewriteBase /ecwww111-2/wp/
-RewriteRule ^index\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /ecwww111-2/wp/index.php [L]
-</IfModule>
+# 在含有 BEGIN WordPress 及 END WordPress 標記的這兩行間的指示詞內容為動態產生，
+# 且應僅有 WordPress 篩選器能進行修改。對這兩行間任何指示詞內容的變更，
+# 都會遭到系統覆寫。
 
 # END WordPress
