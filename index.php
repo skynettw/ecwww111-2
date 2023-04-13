@@ -6,13 +6,8 @@
 <body>
 
 <h1>Welcome to my website!</h1>
-<hr>
-<a href="/ecwww111-2/">回首頁</a>
-<a href="https://www.ccet.nkust.edu.tw">不分系</a>
-<a href="rate.php">匯率換算</a>
-<a href="bmi.php">BMI計算</a>
-<hr>
+<?php include "header.php"; ?>
 <p>點擊上面的選項，執行更多的功能！</p>
-
+<?php include "footer.php"?>
 </body>
 </html>
