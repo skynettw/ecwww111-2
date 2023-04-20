@@ -33,7 +33,8 @@ if ($result->num_rows > 0) {
       "<td>" . $row["name"] . "</td>" .
       "<td>" . $row["h"] . "</td>" .
       "<td>" . $row["w"] . "</td>" .
-      "<td>刪除</td>" .
+      "<td><a href='del.php?id="
+      . $row["id"] . "'>刪除</a></td>" .
       "</tr>";
   }
   echo "</table>";
