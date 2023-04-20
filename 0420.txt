@@ -1,0 +1,7 @@
+網頁在傳遞資料（Browser->Server）的時候，
+最常用協定有兩種：
+POST ==> 大部份都是用在表單  method=POST
+$data = $_POST["fieldname"];
+
+GET  ==> 大部份是透過網址傳遞  yoururl.php?a=value
+$data = $_GET["a"];
