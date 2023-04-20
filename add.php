@@ -1,8 +1,5 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "12345678";
-$dbname = "mydb";
+include("database.php");
 
 $name = $_POST["name"];
 $h = $_POST["height"];
@@ -15,8 +12,8 @@ if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
 
-$sql = "INSERT INTO bodyinfo (name, h, w) VALUES ('" . 
-      $name . "'," . $h . "," . $w . ")";
+$sql = "INSERT INTO bodyinfo (name, h, w) VALUES ('" .
+  $name . "'," . $h . "," . $w . ")";
 
 $conn->query($sql);
 $conn->close();
