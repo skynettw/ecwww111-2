@@ -1,4 +1,5 @@
 <?php
+session_start();
 include "bootstrap.php";
 include "database.php";
 
@@ -12,12 +13,15 @@ if ($conn->connect_error) {
 <div class="container">
   <h1 class="alert alert-warning">班級健康管理</h1>
   <?php include "header.php"; ?>
+  <?php if ($_SESSION["user"]=="administrator") {
+    ?>
   <form action="add.php" method="POST">
     姓名：<input type=text name=name size=10 required><br>
     身高：<input type=text name=height size=5 required>公分<br>
     體重：<input type=text name=weight size=5 required>公斤<br>
     <input type=submit value="新增">
   </form>
+  <?php } ?>
   <hr>
   <?php
   $sql = "SELECT * FROM bodyinfo order by h desc";
@@ -31,10 +35,17 @@ if ($conn->connect_error) {
       echo "<td>" . $row["id"] . "</td>" .
         "<td>" . $row["name"] . "</td>" .
         "<td>" . $row["h"] . "</td>" .
-        "<td>" . $row["w"] . "</td>" .
-        "<td><a href='del.php?id="
-        . $row["id"] . "' class='btn btn-outline-danger btn-sm'>刪除</a></td>" .
-        "</tr>";
+        "<td>" . $row["w"] . "</td>";
+
+      if ($_SESSION["user"]=="administrator") {
+        echo "<td><a href='del.php?id="
+        . $row["id"] . "' class='btn btn-outline-danger btn-sm'>刪除</a></td>";
+      }
+
+        
+
+
+      echo "</tr>";
     }
     echo "</table>";
   } else {
