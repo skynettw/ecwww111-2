@@ -6,6 +6,12 @@
     <div class="container">
         <h1>Welcome to my website!</h1>
         <?php include "header.php"; ?>
-        <p>點擊上面的選項，執行更多的功能！</p>
+<form action="index.php" method="POST">
+帳號：<input type=text size=10 name="account"><br>
+密碼：<input type=password size=10 name="password"><br>
+<input type=submit value="登入">
+<input type=reset value="清除">
+</form>
+        
     </div>
-    <?php include "footer.php" ?>
+<?php include "footer.php" ?>
