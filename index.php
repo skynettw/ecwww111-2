@@ -3,7 +3,10 @@
   $account = $_POST["account"];
   $password = $_POST["password"];
   if ($account!="" && $password!="") {
-    echo $account . "/" . $password . "<br>";
+    if ($account=="minhuang" && $password=="1234")
+    {
+        echo "Welcome administrator!";
+    }
   }
 ?>
 <?php include "bootstrap.php" ?>
