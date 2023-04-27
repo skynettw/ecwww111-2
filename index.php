@@ -1,3 +1,11 @@
+<?php 
+  // 以下是密碼檢查的程式碼 
+  $account = $_POST["account"];
+  $password = $_POST["password"];
+  if ($account!="" && $password!="") {
+    echo $account . "/" . $password . "<br>";
+  }
+?>
 <?php include "bootstrap.php" ?>
 <title>何敏煌的入口網站</title>
 </head>
