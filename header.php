@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Navbar</a>
@@ -25,6 +26,14 @@
                         <li><a class="dropdown-item" href="bodyinfo.php">健康管理</a></li>
                     </ul>
                 </li>
+    <?php 
+       if ($_SESSION["user"]=="administrator") {
+    ?>    
+    
+                <li class="nav-item">
+                    <a class="nav-link" href="logout.php">登出</a>
+                </li>
+    <?php } ?>
             </ul>
         </div>
     </div>
