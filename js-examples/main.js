@@ -4,9 +4,8 @@ function greeting()
 }
 
 function changeText(obj) {
-    var msg = obj;
+    var msg = obj.textContent;
     document.getElementById("content").innerHTML = msg;
-    console.log(obj);
 }
 
 function bmi() {
