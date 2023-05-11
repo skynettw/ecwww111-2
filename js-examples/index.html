@@ -7,9 +7,13 @@
     <body>
         <h2>Hello</h2>
         <hr>
+        身高：<input type="text" id="height" size="5">公分<br>
+        體重：<input type="text" id="weight" size="5">公斤<br>
+        <button onclick="bmi()">計算BMI</button>
+        你的BMI是：<p id="bmiresult">Wait</p>
         <button onclick="greeting()">請按我</button>
-        <button onclick="changeText('你好')">你好</button>
-        <button onclick="changeText('Hi')">Hi</button>
+        <button onclick="changeText(this)">你好</button>
+        <button onclick="changeText(this)">Hi</button>
         <p id="content">這是主要的內容區</p>
 
         <script>
@@ -19,6 +23,10 @@
             }
             document.getElementById("content").innerHTML = "Hello JavaScript";
             
+        </script>
+        <hr>
+        <script>
+            document.write(Date());
         </script>
     </body>
 </html>
