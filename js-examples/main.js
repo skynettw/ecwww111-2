@@ -18,6 +18,9 @@ function bmi() {
 function changeTV() {
     var tv = document.getElementById("tvselect");
     var tvText = tv.options[tv.selectedIndex].text;
-    var vid = tv.options[tv.selectedIndex].value;
-    console.log(tvText, vid);
+    var vid = tv.value;
+    const prestr= '<iframe width="560" height="315" src="https://www.youtube.com/embed/';
+    const poststr = '" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+    var tvstr = prestr + vid + poststr;
+    document.getElementById("tvdisplay").innerHTML = tvstr;
 }
