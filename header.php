@@ -25,16 +25,17 @@
                         <li><a class="dropdown-item" href="lotto.php">樂透預測</a></li>
                         <li><a class="dropdown-item" href="bodyinfo.php">健康管理</a></li>
                         <li><a class="dropdown-item" href="js-examples/index.html">JavaScript練習</a></li>
+                        <li><a class="dropdown-item" href="js-examples/tv.html">電視選台器</a></li>
                     </ul>
                 </li>
-    <?php 
-       if ($_SESSION["user"]=="administrator") {
-    ?>    
-    
-                <li class="nav-item">
-                    <a class="nav-link" href="logout.php">登出</a>
-                </li>
-    <?php } ?>
+                <?php
+                if ($_SESSION["user"] == "administrator") {
+                ?>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="logout.php">登出</a>
+                    </li>
+                <?php } ?>
             </ul>
         </div>
     </div>
