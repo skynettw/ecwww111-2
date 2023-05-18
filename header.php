@@ -25,7 +25,7 @@
                         <li><a class="dropdown-item" href="lotto.php">樂透預測</a></li>
                         <li><a class="dropdown-item" href="bodyinfo.php">健康管理</a></li>
                         <li><a class="dropdown-item" href="js-examples/index.html">JavaScript練習</a></li>
-                        <li><a class="dropdown-item" href="js-examples/tv.html">電視選台器</a></li>
+                        <li><a class="dropdown-item" href="js-examples/tv.php">電視選台器</a></li>
                         <li><a class="dropdown-item" href="tvlist.php">編輯電視台</a></li>
                     </ul>
                 </li>
