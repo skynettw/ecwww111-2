@@ -45,6 +45,27 @@ INSERT INTO `bodyinfo` (`id`, `name`, `h`, `w`) VALUES
 (3, '陳小花', 165, 45),
 (4, '許大明', 190, 80);
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `tvinfo`
+--
+
+CREATE TABLE `tvinfo` (
+  `id` int(11) NOT NULL,
+  `title` varchar(50) NOT NULL,
+  `vid` varchar(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- 傾印資料表的資料 `tvinfo`
+--
+
+INSERT INTO `tvinfo` (`id`, `title`, `vid`) VALUES
+(1, 'TVBS', 'm_dhMSvUCIc'),
+(2, '民視', 'ylYJSBUgaMA'),
+(3, '中天', 'oIgbl7t0S_w');
+
 --
 -- 已傾印資料表的索引
 --
@@ -56,6 +77,12 @@ ALTER TABLE `bodyinfo`
   ADD PRIMARY KEY (`id`);
 
 --
+-- 資料表索引 `tvinfo`
+--
+ALTER TABLE `tvinfo`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- 在傾印的資料表使用自動遞增(AUTO_INCREMENT)
 --
 
@@ -64,6 +91,12 @@ ALTER TABLE `bodyinfo`
 --
 ALTER TABLE `bodyinfo`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `tvinfo`
+--
+ALTER TABLE `tvinfo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
