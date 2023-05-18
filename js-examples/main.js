@@ -14,3 +14,10 @@ function bmi() {
     var result = w / (h/100)**2;
     document.getElementById("bmiresult").innerHTML = result.toFixed(2);
 }
+
+function changeTV() {
+    var tv = document.getElementById("tvselect");
+    var tvText = tv.options[tv.selectedIndex].text;
+    var vid = tv.options[tv.selectedIndex].value;
+    console.log(tvText, vid);
+}
