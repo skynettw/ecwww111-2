@@ -4,6 +4,7 @@
         <script src="https://code.jquery.com/jquery-3.4.1.js"
 integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="crossorigin="anonymous"></script>
         <title>Ajax-test</title>
+        <meta charset="utf-8">
     </head>
     <body>
         <h2>Ajax Test</h2>
@@ -11,12 +12,36 @@ integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="crossorigin="anon
         <p style="background-color:blue;color:white;">
             Click Me to hide!
         </p>
+        <button id="show">Show Me</button>
+        <p id="content">這是主要的內容區</p>
         <script>
-            $(document).ready(function(){
-                $("p").click(function(){
-                  $(this).hide();
-                });
-              });
+            $(document).ready(
+                function(){
+                    $("p").click(
+                        function(){
+                            $(this).hide();
+                        }
+                    );
+                    $("#show").click(
+                        function(){
+                            $.ajax({
+                                type: "GET",
+                                url: "http://localhost/ecwww111-2/tang.txt",
+                                dataType: "text",
+                                success: function (response) {
+                                  $("#content").html(response);
+                                    console.log(response);
+                                },
+                                error: function (thrownError) {
+                                  console.log(thrownError);
+                                }
+                            });
+                        }
+                    );
+                    
+                }
+              
+            );
         </script>
         
     </body>
