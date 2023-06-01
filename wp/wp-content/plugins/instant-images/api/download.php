@@ -1,9 +1,9 @@
 <?php
 /**
- * Custom /ownload API route for download and adding images to media library.
+ * Custom API route for download and adding images to media library.
  *
- * @since 3.0
  * @author ConnektMedia <support@connekthq.com>
+ * @since 3.0
  * @package InstantImages
  */
 
@@ -31,12 +31,10 @@ add_action(
  *
  * @param WP_REST_Request $request Rest request object.
  * @return $response
- * @since 3.0
  * @author ConnektMedia <support@connekthq.com>
  * @package InstantImages
  */
 function instant_images_download( WP_REST_Request $request ) {
-
 	if ( ! InstantImages::instant_img_has_access() ) {
 		// Exit if not allowed.
 		$response = [
@@ -50,9 +48,7 @@ function instant_images_download( WP_REST_Request $request ) {
 	}
 
 	// Global settings.
-	$options    = get_option( 'instant_img_settings' );
-	$max_width  = isset( $options['unsplash_download_w'] ) ? $options['unsplash_download_w'] : 1600; // width.
-	$max_height = isset( $options['unsplash_download_h'] ) ? $options['unsplash_download_h'] : 1200; // height.
+	$settings = InstantImages::instant_img_get_settings();
 
 	// Core WP includes.
 	require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -64,13 +60,13 @@ function instant_images_download( WP_REST_Request $request ) {
 	if ( $data ) {
 		$provider    = $data['provider'];
 		$id          = $data['id']; // Image ID.
-		$image_url   = instant_images_generate_image_url( $provider, $data['image_url'], $max_width, $max_height ); // Image URL.
+		$image_url   = instant_images_generate_image_url( $provider, $data['image_url'], $settings->max_width, $settings->max_height ); // Image URL.
 		$filename    = sanitize_text_field( $data['filename'] ); // The filename.
 		$extension   = sanitize_text_field( $data['extension'] ); // File extension.
 		$title       = sanitize_text_field( $data['title'] ); // Title.
 		$alt         = sanitize_text_field( $data['alt'] ); // Alt text.
 		$caption     = wp_kses_post( $data['caption'] ); // Caption text.
-		$description = ''; // Description/Post Content.
+		$description = ''; // Post Content.
 		$cfilename   = sanitize_title( $data['custom_filename'] ); // Custom filename.
 		$lang        = sanitize_text_field( $data['lang'] ); // Media language.
 		$parent_id   = $data['parent_id'] ? sanitize_title( $data['parent_id'] ) : 0; // Parent post ID.
@@ -81,9 +77,31 @@ function instant_images_download( WP_REST_Request $request ) {
 		$has_error = false;
 		$error_msg = '';
 
-		/**
-		 * Check if file exists on remote server.
-		 */
+		if ( $provider !== 'unsplash' ) {
+
+			/**
+			 * Remove querystring from the URL.
+			 *
+			 * Example: photo.jpg?size=lg -> photo.jpg.
+			 */
+			$url = strtok( $image_url, '?' );
+
+			/**
+			 * Check if file mime type is allowed.
+			 *
+			 * @see https://developer.wordpress.org/reference/functions/wp_check_filetype/
+			 */
+			$file_type = wp_check_filetype( $url );
+
+			if ( ! $file_type || ! $file_type['ext'] && $provider ) {
+				$has_error = true;
+
+				// translators: File extension.
+				$error_msg = sprintf( esc_attr__( 'File mime type (.%1$s) is not allowed. Use the `upload_mimes` WP hook to add support for this mime type.', 'instant-images' ), $extension );
+			}
+		}
+
+		// Check if file exists on remote server.
 		if ( ! instant_images_remote_file_exists( $image_url ) ) {
 			$has_error = true;
 			$error_msg = __( 'Image file does not exist on remote server or there was an error accessing the file.', 'instant-images' );
@@ -101,8 +119,8 @@ function instant_images_download( WP_REST_Request $request ) {
 			wp_send_json( $response );
 		}
 
-		// Send request to `wp_remote_get`.
-		$response = wp_remote_get( $image_url );
+		// Send request to `wp_safe_remote_get`.
+		$response = wp_safe_remote_get( $image_url );
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error( 100, __( 'Image download failed, please try again. Errors:', 'instant-images' ) . PHP_EOL . $response->get_error_message() );
 		}
@@ -110,7 +128,7 @@ function instant_images_download( WP_REST_Request $request ) {
 		// Get Headers.
 		$type = wp_remote_retrieve_header( $response, 'content-type' );
 		if ( ! $type ) {
-			return new WP_Error( 100, __( 'Image type could not be determined', 'instant-images' ) );
+			return new WP_Error( 100, __( 'Image type could not be determined.', 'instant-images' ) );
 		}
 
 		// Upload remote file.
@@ -125,10 +143,14 @@ function instant_images_download( WP_REST_Request $request ) {
 			'post_mime_type' => $type,
 		];
 
+		if ( ! $mirror['file'] ) {
+			return new WP_Error( 500, __( 'Attachment file not found prior to upload.', 'instant-images' ) );
+		}
+
 		// Insert as attachment.
 		$image_id = wp_insert_attachment( $attachment, $mirror['file'], $parent_id );
 
-		// Add Alt Text as Post Meta.
+		// Add alt text as postmeta.
 		update_post_meta( $image_id, '_wp_attachment_image_alt', $alt );
 
 		// Set media language.
@@ -136,7 +158,7 @@ function instant_images_download( WP_REST_Request $request ) {
 			pll_set_post_language( $image_id, $lang ); // Polylang.
 		}
 
-		// Generate Metadata.
+		// Generate metadata.
 		$attach_data = wp_generate_attachment_metadata( $image_id, $mirror['file'] );
 		wp_update_attachment_metadata( $image_id, $attach_data );
 
@@ -150,9 +172,14 @@ function instant_images_download( WP_REST_Request $request ) {
 			'instant_images_after_upload',
 			[
 				'filename'       => $name,
-				'unsplash_id'    => $id,
+				'id'             => $id,
+				'title'          => $title,
+				'alt'            => $alt,
+				'caption'        => $caption,
 				'attachment_id'  => $image_id,
 				'attachment_url' => wp_get_attachment_url( $image_id ),
+				'provider'       => $provider,
+				'original_url'   => $image_url,
 			]
 		);
 
@@ -165,6 +192,7 @@ function instant_images_download( WP_REST_Request $request ) {
 			'attachment' => [
 				'id'          => $image_id,
 				'url'         => wp_get_attachment_url( $image_id ),
+				'edit_url'    => get_edit_post_link( $image_id ),
 				'alt'         => $alt,
 				'caption'     => $caption,
 				'description' => $description,
@@ -200,20 +228,26 @@ function instant_images_download( WP_REST_Request $request ) {
 function instant_images_generate_image_url( $provider, $url, $max_width, $max_height ) {
 	/**
 	 * Security check.
-	 * Note: Confirm image URL does NOT contains relative path.
+	 * Confirm image URL does NOT contains relative path.
 	 */
 	if ( false !== strpos( $url, './' ) ) {
 		return false;
 	}
 
-	$server_ip   = $_SERVER['SERVER_ADDR']; // Server IP.
-	$server_name = $_SERVER['SERVER_NAME']; // Server base URL.
+	// Get all potential download URLs.
+	$download_urls = InstantImages::instant_images_download_urls();
+
+	// Parse $url to create URL array.
+	$host = wp_parse_url( $url );
+
+	// Construct a host url from the parsed $url. e.g. https://images.unsplash.com.
+	$host_url = $host['scheme'] . '://' . $host['host'];
 
 	/**
 	 * Security check.
-	 * Note: Check for local server IP or site URL in image URL.
+	 * Check image download URL is valid, allowed and supported by Instant Images.
 	 */
-	if ( false !== strpos( $url, $server_ip ) || false !== strpos( $url, $server_name ) ) {
+	if ( ! in_array( $host_url, $download_urls, true ) ) {
 		return false;
 	}
 
@@ -247,28 +281,4 @@ function instant_images_generate_image_url( $provider, $url, $max_width, $max_he
 function instant_images_remote_file_exists( $url ) {
 	$response = wp_remote_head( $url );
 	return 200 === wp_remote_retrieve_response_code( $response );
-}
-
-/**
- * Resize original image to max size (set in Instant Images settings)
- *
- * @param string $filename the image filename.
- * @since 3.0
- * @author ConnektMedia <support@connekthq.com>
- * @package InstantImages
- */
-function instant_images_resize_download( $filename ) {
-	$options    = get_option( 'instant_img_settings' );
-	$download_w = isset( $options['unsplash_download_w'] ) ? $options['unsplash_download_w'] : 1600; // width.
-	$download_h = isset( $options['unsplash_download_h'] ) ? $options['unsplash_download_h'] : 1200; // height.
-
-	require_once ABSPATH . 'wp-admin/includes/file.php';
-	require_once ABSPATH . 'wp-admin/includes/image.php';
-
-	$uploads_dir    = wp_upload_dir();
-	$original_image = wp_get_image_editor( $uploads_dir['path'] . '/' . $filename );
-	if ( ! is_wp_error( $original_image ) ) {
-		$original_image->resize( $download_w, $download_h, false );
-		$original_image->save( $uploads_dir['path'] . '/' . $filename );
-	}
 }

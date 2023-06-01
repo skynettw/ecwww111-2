@@ -2,12 +2,12 @@
 /**
  * Plugin Name: Instant Images
  * Plugin URI: https://connekthq.com/plugins/instant-images/
- * Description: One click photo uploads directly to your media library from Unsplash, Pixabay, Pexels and Openverse.
+ * Description: One click image uploads directly to your media library from Unsplash, Openverse, Pixabay and Pexels.
  * Author: Darren Cooney
  * Twitter: @connekthq
  * Author URI: https://connekthq.com
  * Text Domain: instant-images
- * Version: 5.1.0.2
+ * Version: 5.3.1
  * License: GPL
  * Copyright: Darren Cooney & Connekt Media
  *
@@ -18,68 +18,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'INSTANT_IMAGES_VERSION', '5.1.0.2' );
-define( 'INSTANT_IMAGES_RELEASE', 'March 8, 2023' );
-
-/**
- * Activation hook
- *
- * @since 2.0
- * @author ConnektMedia <support@connekthq.com>
- */
-function instant_images_activate() {
-	// Create /instant-images directory inside /uploads to temporarily store images.
-	$upload_dir = wp_upload_dir();
-	$dir        = $upload_dir['basedir'] . '/instant-images';
-	if ( ! is_dir( $dir ) ) {
-		wp_mkdir_p( $dir );
-	}
-}
-register_activation_hook( __FILE__, 'instant_images_activate' );
-
-/**
- * Deactivation hook
- *
- * @since 3.2.2
- * @author ConnektMedia <support@connekthq.com>
- */
-function instant_images_deactivate() {
-	// Delete /instant-images directory inside /uploads to temporarily store images.
-	$upload_dir = wp_upload_dir();
-	$dir        = $upload_dir['basedir'] . '/instant-images';
-
-	if ( is_dir( $dir ) ) {
-		// Check for files in dir.
-		foreach ( glob( $dir . '/*.*' ) as $filename ) {
-			if ( is_file( $filename ) ) {
-				unlink( $filename );
-			}
-		}
-		// Delete the directory.
-		rmdir( $dir );
-	}
-}
-register_deactivation_hook( __FILE__, 'instant_images_deactivate' );
+define( 'INSTANT_IMAGES_VERSION', '5.3.1' );
+define( 'INSTANT_IMAGES_RELEASE', 'May 12, 2023' );
 
 /**
  * InstantImages class
  *
- * @since 2.0
  * @author ConnektMedia <support@connekthq.com>
+ * @since 2.0
  */
 class InstantImages {
 
 	/**
 	 * Set up plugin.
 	 *
-	 * @since 2.0
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 2.0
 	 */
 	public function __construct() {
-
-		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( &$this, 'instant_images_add_action_links' ) );
-		add_action( 'enqueue_block_editor_assets', array( &$this, 'instant_img_block_plugin_enqueue' ) );
-		add_action( 'wp_enqueue_media', array( &$this, 'instant_img_wp_media_enqueue' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), [ &$this, 'add_action_links' ] );
+		add_action( 'enqueue_block_editor_assets', [ &$this, 'enqueue_block_editor' ] );
+		add_action( 'wp_enqueue_media', [ &$this, 'enqueue_media' ] );
 		load_plugin_textdomain( 'instant-images', false, dirname( plugin_basename( __FILE__ ) ) . '/lang/' ); // load text domain.
 		$this->includes();
 		$this->constants();
@@ -88,9 +47,9 @@ class InstantImages {
 	/**
 	 * Get a list of all plugin providers.
 	 *
-	 * @since 4.6
-	 * @author ConnektMedia <support@connekthq.com>
 	 * @return array The array of providers.
+	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 4.6
 	 */
 	public static function instant_img_get_providers() {
 		$providers = [
@@ -99,15 +58,20 @@ class InstantImages {
 				'slug'         => 'unsplash',
 				'requires_key' => true,
 				'url'          => 'https://unsplash.com/developers',
-				'download_url' => 'https://images.unsplash.com',
 				'constant'     => 'INSTANT_IMAGES_UNSPLASH_KEY',
+			],
+			[
+				'name'         => 'Openverse',
+				'slug'         => 'openverse',
+				'requires_key' => false,
+				'url'          => 'https://api.openverse.engineering/v1/#section/Register-and-Authenticate/Register-for-a-key',
+				'constant'     => '',
 			],
 			[
 				'name'         => 'Pixabay',
 				'slug'         => 'pixabay',
 				'requires_key' => true,
 				'url'          => 'https://pixabay.com/service/about/api/',
-				'download_url' => 'https://pixabay.com',
 				'constant'     => 'INSTANT_IMAGES_PIXABAY_KEY',
 			],
 			[
@@ -115,16 +79,7 @@ class InstantImages {
 				'slug'         => 'pexels',
 				'requires_key' => true,
 				'url'          => 'https://www.pexels.com/join-consumer/',
-				'download_url' => 'https://images.pexels.com',
 				'constant'     => 'INSTANT_IMAGES_PEXELS_KEY',
-			],
-			[
-				'name'         => 'Openverse',
-				'slug'         => 'openverse',
-				'requires_key' => false,
-				'url'          => 'https://api.openverse.engineering/v1/#section/Register-and-Authenticate/Register-for-a-key',
-				'download_url' => 'https://api.openverse.engineering/',
-				'constant'     => '',
 			],
 		];
 		return $providers;
@@ -134,129 +89,158 @@ class InstantImages {
 	 * Get a list of potential download URLs to increase security of download functionality.
 	 *
 	 * @return array The array of urls.
+	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 5.0
 	 */
-	public static function instant_img_get_download_urls() {
-		$providers = self::instant_img_get_providers();
-		$urls      = wp_list_pluck( $providers, 'download_url' );
+	public static function instant_images_download_urls() {
+		$urls = [
+			'https://images.unsplash.com',
+			'https://pixabay.com',
+			'https://images.pexels.com',
+			'https://pd.w.org',
+			'https://live.staticflickr.com',
+			'https://upload.wikimedia.org',
+		];
 		return $urls;
+	}
+
+
+	/**
+	 * Get global Instant Images plugin settings.
+	 *
+	 * @return object Settings as an STD object with defaults.
+	 */
+	public static function instant_img_get_settings() {
+
+		// General plugin settings.
+		$options          = get_option( 'instant_img_settings' );
+		$max_width        = isset( $options['unsplash_download_w'] ) ? $options['unsplash_download_w'] : 1600; // width of download file.
+		$max_height       = isset( $options['unsplash_download_h'] ) ? $options['unsplash_download_h'] : 1200; // height of downloads.
+		$default_provider = isset( $options['default_provider'] ) ? $options['default_provider'] : 'unsplash'; // Default provider.
+		$auto_attribution = isset( $options['auto_attribution'] ) ? $options['auto_attribution'] : '0'; // Default provider.
+
+		// API Keys.
+		$api_options  = get_option( 'instant_img_api_settings' );
+		$unsplash_api = isset( $api_options['unsplash_api'] ) ? $api_options['unsplash_api'] : '';
+		$unsplash_api = empty( $unsplash_api ) ? '' : $unsplash_api; // If empty, set to default key.
+		$pixabay_api  = isset( $api_options['pixabay_api'] ) ? $api_options['pixabay_api'] : '';
+		$pixabay_api  = empty( $pixabay_api ) ? '' : $pixabay_api; // If empty, set to default key.
+		$pexels_api   = isset( $api_options['pexels_api'] ) ? $api_options['pexels_api'] : '';
+		$pexels_api   = empty( $pexels_api ) ? '' : $pexels_api; // If empty, set to default key.
+
+		return (object) [
+			'max_width'        => $max_width,
+			'max_height'       => $max_height,
+			'default_provider' => $default_provider,
+			'auto_attribution' => $auto_attribution,
+			'unsplash_api'     => $unsplash_api,
+			'pixabay_api'      => $pixabay_api,
+			'pexels_api'       => $pexels_api,
+		];
 	}
 
 	/**
 	 * Enqueue Gutenberg Block sidebar plugin
 	 *
-	 * @since 3.0
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 3.0
 	 */
-	public function instant_img_block_plugin_enqueue() {
-
-		if ( $this::instant_img_has_access() && $this::instant_img_not_current_screen( [ 'widgets' ] ) ) {
-
-			$suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min'; // Use minified libraries for SCRIPT_DEBUG.
-
+	public function enqueue_block_editor() {
+		if ( $this::instant_img_has_access() && $this::instant_img_not_current_screen( [ 'widgets', 'site-editor' ] ) ) {
 			wp_enqueue_script(
-				'instant-images-block',
-				INSTANT_IMAGES_URL . 'dist/js/instant-images-block' . $suffix . '.js',
-				'',
+				'instant-images-plugin-sidebar',
+				INSTANT_IMAGES_URL . 'build/plugin-sidebar/index.js',
+				[],
 				INSTANT_IMAGES_VERSION,
 				true
 			);
 
 			wp_enqueue_style(
 				'admin-instant-images',
-				INSTANT_IMAGES_URL . 'dist/css/instant-images' . $suffix . '.css',
-				array( 'wp-edit-post' ),
+				INSTANT_IMAGES_URL . 'build/style-instant-images.css',
+				[ 'wp-edit-post' ],
 				INSTANT_IMAGES_VERSION
 			);
 
-			$this::instant_img_localize( 'instant-images-block' );
-
+			$this::instant_img_localize( 'instant-images-plugin-sidebar' );
 		}
 	}
 
 	/**
-	 * Enqueue script for Media Modal and Blocks sidebar
+	 * Enqueue script for Media Modal and Blocks sidebar.
 	 *
-	 * @since 4.0
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 4.0
 	 */
-	public function instant_img_wp_media_enqueue() {
-
-		$suffix   = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min'; // Use minified libraries for SCRIPT_DEBUG.
-		$show_tab = $this::instant_img_show_tab( 'media_modal_display' );  // Show Tab Setting.
-
-		if ( $this::instant_img_has_access() && $show_tab ) {
-
+	public function enqueue_media() {
+		$show_tab       = $this::instant_img_show_tab( 'media_modal_display' ); // Show Tab Setting.
+		$current_screen = is_admin() && function_exists( 'get_current_screen' ) ? get_current_screen()->base : ''; // Current admin screen.
+		if ( $this::instant_img_has_access() && $show_tab && $current_screen !== 'upload' ) {
 			wp_enqueue_script(
-				'instant-images-media-router',
-				INSTANT_IMAGES_URL . 'dist/js/instant-images-media' . $suffix . '.js',
-				'',
+				'instant-images-media-modal',
+				INSTANT_IMAGES_URL . 'build/media-modal/index.js',
+				[ 'wp-element' ],
 				INSTANT_IMAGES_VERSION,
 				true
 			);
 
 			wp_enqueue_style(
 				'admin-instant-images',
-				INSTANT_IMAGES_URL . 'dist/css/instant-images' . $suffix . '.css',
+				INSTANT_IMAGES_URL . 'build/style-instant-images.css',
 				'',
 				INSTANT_IMAGES_VERSION
 			);
-			$this::instant_img_localize( 'instant-images-media-router' );
+			$this::instant_img_localize( 'instant-images-media-modal' );
 		}
 	}
 
 	/**
 	 * Localization strings and settings
 	 *
-	 * @param string $script id.
-	 * @since 2.0
+	 * @param string $script Script ID.
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 2.0
 	 */
 	public static function instant_img_localize( $script = 'instant-images-react' ) {
-
 		global $post;
-		$options          = get_option( 'instant_img_settings' );
-		$download_w       = isset( $options['unsplash_download_w'] ) ? $options['unsplash_download_w'] : 1600; // width of download file.
-		$download_h       = isset( $options['unsplash_download_h'] ) ? $options['unsplash_download_h'] : 1200; // height of downloads.
-		$default_provider = isset( $options['default_provider'] ) ? $options['default_provider'] : 'unsplash'; // Default provider.
+		$settings = self::instant_img_get_settings();
 
 		// Unsplash API.
 		if ( defined( 'INSTANT_IMAGES_UNSPLASH_KEY' ) ) {
 			$unsplash_api = INSTANT_IMAGES_UNSPLASH_KEY;
 		} else {
-			$unsplash_api = isset( $options['unsplash_api'] ) ? $options['unsplash_api'] : '';
-			$unsplash_api = empty( $unsplash_api ) ? '' : $unsplash_api; // If empty, set to default key.
+			$unsplash_api = $settings->unsplash_api;
 		}
 		// Pixabay API.
 		if ( defined( 'INSTANT_IMAGES_PIXABAY_KEY' ) ) {
 			$pixabay_api = INSTANT_IMAGES_PIXABAY_KEY;
 		} else {
-			$pixabay_api = isset( $options['pixabay_api'] ) ? $options['pixabay_api'] : '';
-			$pixabay_api = empty( $pixabay_api ) ? '' : $pixabay_api; // If empty, set to default key.
+			$pixabay_api = $settings->pixabay_api;
 		}
 
 		// Pexels API.
 		if ( defined( 'INSTANT_IMAGES_PEXELS_KEY' ) ) {
 			$pexels_api = INSTANT_IMAGES_PEXELS_KEY;
 		} else {
-			$pexels_api = isset( $options['pexels_api'] ) ? $options['pexels_api'] : '';
-			$pexels_api = empty( $pexels_api ) ? '' : $pexels_api; // If empty, set to default key.
+			$pexels_api = $settings->pexels_api;
 		}
 
 		wp_localize_script(
 			$script,
 			'instant_img_localize',
-			array(
+			[
 				'instant_images'          => __( 'Instant Images', 'instant-images' ),
 				'version'                 => INSTANT_IMAGES_VERSION,
 				'root'                    => esc_url_raw( rest_url() ),
 				'nonce'                   => wp_create_nonce( 'wp_rest' ),
 				'ajax_url'                => admin_url( 'admin-ajax.php' ),
 				'admin_nonce'             => wp_create_nonce( 'instant_img_nonce' ),
-				'parent_id'               => $post ? $post->ID : 0,
 				'lang'                    => function_exists( 'pll_current_language' ) ? pll_current_language() : '',
-				'default_provider'        => $default_provider,
-				'download_width'          => esc_html( $download_w ),
-				'download_height'         => esc_html( $download_h ),
+				'parent_id'               => $post ? $post->ID : 0,
+				'auto_attribution'        => esc_html( $settings->auto_attribution ),
+				'default_provider'        => esc_html( $settings->default_provider ),
+				'download_width'          => esc_html( $settings->max_width ),
+				'download_height'         => esc_html( $settings->max_height ),
 				'query_debug'             => apply_filters( 'instant_images_query_debug', false ),
 				'unsplash_app_id'         => $unsplash_api,
 				'unsplash_url'            => 'https://unsplash.com',
@@ -288,7 +272,7 @@ class InstantImages {
 				'resizing'                => __( 'Creating image sizes...', 'instant-images' ),
 				'resizing_still'          => __( 'Still resizing...', 'instant-images' ),
 				'no_results'              => __( 'Nothing matched your search query.', 'instant-images' ),
-				'no_results_desc'         => __( 'Try adjusting your criteria and searching again.', 'instant-images' ),
+				'no_results_desc'         => __( 'Try adjusting your filter criteria or searching again.', 'instant-images' ),
 				'new'                     => __( 'New', 'instant-images' ),
 				'latest'                  => __( 'New', 'instant-images' ),
 				'oldest'                  => __( 'Oldest', 'instant-images' ),
@@ -363,15 +347,15 @@ class InstantImages {
 					'license'      => __( 'License:', 'instant-images' ),
 					'source'       => __( 'Source:', 'instant-images' ),
 				],
-			)
+			]
 		);
 	}
 
 	/**
 	 * Include these files in the admin
 	 *
-	 * @since 2.0
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 2.0
 	 */
 	private function includes() {
 		if ( is_admin() ) {
@@ -383,16 +367,15 @@ class InstantImages {
 		require_once 'api/test.php';
 		require_once 'api/download.php';
 		require_once 'api/settings.php';
-		require_once 'api/v5-upgrade.php';
 	}
 
 	/**
 	 * Show tab to upload image on post edit screens
 	 *
 	 * @param string $option WP Option.
-	 * @return $show boolean
-	 * @since 3.2.1
+	 * @return boolean
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 3.2.1
 	 */
 	public static function instant_img_show_tab( $option ) {
 		if ( ! $option ) {
@@ -412,9 +395,9 @@ class InstantImages {
 	/**
 	 * Confirm user has access to instant images.
 	 *
-	 * @since 4.3.3
 	 * @return boolean
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 4.3.3
 	 */
 	public static function instant_img_has_access() {
 		$access = false;
@@ -427,10 +410,10 @@ class InstantImages {
 	/**
 	 * Block Instant Images from loading on some screens.
 	 *
-	 * @since 4.4.0.3
 	 * @param array $array An array of screen IDs.
 	 * @return boolean
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 4.4.0.3
 	 */
 	public static function instant_img_not_current_screen( $array = [] ) {
 		$access       = true;
@@ -444,11 +427,12 @@ class InstantImages {
 	/**
 	 * Set up plugin constants.
 	 *
-	 * @since 2.0
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 2.0
 	 */
 	private function constants() {
 		define( 'INSTANT_IMAGES_TITLE', 'Instant Images' );
+
 		$upload_dir = wp_upload_dir();
 		define( 'INSTANT_IMAGES_UPLOAD_PATH', $upload_dir['basedir'] . '/instant-images' );
 		define( 'INSTANT_IMAGES_UPLOAD_URL', $upload_dir['baseurl'] . '/instant-images/' );
@@ -456,19 +440,31 @@ class InstantImages {
 		define( 'INSTANT_IMAGES_URL', plugins_url( '/', __FILE__ ) );
 		define( 'INSTANT_IMAGES_ADMIN_URL', plugins_url( 'admin/', __FILE__ ) );
 		define( 'INSTANT_IMAGES_WPADMIN_URL', admin_url( 'upload.php?page=instant-images' ) );
+		define( 'INSTANT_IMAGES_WPADMIN_SETTINGS_URL', admin_url( 'options-general.php?page=instant-images-settings' ) );
 		define( 'INSTANT_IMAGES_NAME', 'instant-images' );
+	}
+
+	/**
+	 * Get the instant images tagline.
+	 *
+	 * @return string
+	 */
+	public static function instant_images_get_tagline() {
+		// translators: Instant Images tagline.
+		$instant_images_tagline = __( 'One click photo uploads from %1$s, %2$s, %3$s and %4$s.', 'instant-images' ); // phpcs:ignore
+		return '<span class="instant-images-tagline">' . sprintf( $instant_images_tagline, '<a href="https://unsplash.com/" target="_blank">Unsplash</a>', '<a href="https://wordpress.org/openverse" target="_blank">Openverse</a>', '<a href="https://pixabay.com/" target="_blank">Pixabay</a>', '<a href="https://pexels.com/" target="_blank">Pexels</a>' ) .'</span>';  // phpcs:ignore
 	}
 
 	/**
 	 * Add custom links to plugins.php
 	 *
-	 * @param array $links current links.
-	 * @since 2.0
-	 * @return {Array} $mylinks
+	 * @param array $links Current links.
+	 * @return array
 	 * @author ConnektMedia <support@connekthq.com>
+	 * @since 2.0
 	 */
-	public function instant_images_add_action_links( $links ) {
-		$mylinks = array( '<a href="' . INSTANT_IMAGES_WPADMIN_URL . '">' . __( ' Get Photos', 'instant-images' ) . '</a>' );
+	public function add_action_links( $links ) {
+		$mylinks = [ '<a href="' . INSTANT_IMAGES_WPADMIN_URL . '">' . __( ' Get Images', 'instant-images' ) . '</a>' ];
 		return array_merge( $mylinks, $links );
 	}
 
@@ -477,9 +473,8 @@ class InstantImages {
 /**
  * The main function responsible for returning the one true InstantImages Instance.
  *
- * @since 2.0
- * @return $instant_images
  * @author ConnektMedia <support@connekthq.com>
+ * @since 2.0
  */
 function instant_images() {
 	global $instant_images;
